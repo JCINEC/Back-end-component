@@ -29,7 +29,23 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
-  joinedRoutes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Route' }],
+  hasDriverLicense: {
+    type: Boolean,
+    required: true
+  },
+  paymentMethod: {
+    type: String,
+    required: true
+  },
+  joinedRoutes: [{
+    routeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Route', required: true },
+    distance: { type: Number, required: true },
+    initStep: {type: Number, required: true},
+    endStep: {type: Number, required: true},
+    modified: { type: Boolean, default: false },
+    createdBy: { type: String, required: true },
+    joinedAt: { type: Date, default: Date.now },
+  }],
   
 })
 

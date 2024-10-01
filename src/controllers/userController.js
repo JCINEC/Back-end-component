@@ -1,9 +1,11 @@
 const userModel = require('../models/userModel') // Import the user model
 const bcrypt = require('bcrypt') // For hashing passwords
-const jwt = require('jsonwebtoken')
+//const jwt = require('jsonwebtoken')
 
 
 const registerUserController = async (req, res) => {
+
+  const { firstName, lastName, userName, email, password, birthDate, hasDriverLicense, paymentMethod } = req.body
 
   if (typeof firstName !== "string" || firstName.trim() === "" || 
       typeof lastName !== "string" || lastName.trim() === "" || 
@@ -13,11 +15,10 @@ const registerUserController = async (req, res) => {
       !birthDate || 
       typeof birthDate.year !== "number" || birthDate.year < 1900 || 
       typeof birthDate.month !== "number" || birthDate.month < 1 || birthDate.month > 12 || 
-      typeof birthDate.day !== "number" || birthDate.day < 1 || birthDate.day > 31) {
+      typeof birthDate.day !== "number" || birthDate.day < 1 || birthDate.day > 31 ||
+      typeof paymentMethod !== "string" || paymentMethod === "") {
     return res.status(400).json({ message: 'Fields filled unproperly'})
   }
-
-  const { firstName, lastName, userName, email, password, birthDate } = req.body
 
   try {
     // Check if the user already exists
@@ -38,6 +39,8 @@ const registerUserController = async (req, res) => {
       email,
       password: hashedPassword,
       birthDate: newBirthDate,
+      hasDriverLicense,
+      paymentMethod,
       joinedRoutes: [],
     })
 
@@ -53,14 +56,6 @@ const registerUserController = async (req, res) => {
 
 
 const loginUserController = async (req, res) => {
-  // Validate input data
-  await body('email').isEmail().normalizeEmail().run(req)
-  await body('password').isLength({ min: 6 }).run(req)
-
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() })
-  }
 
   const { email, password } = req.body
 
@@ -77,14 +72,24 @@ const loginUserController = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' })
     }
 
-    // Just one token but of 1h time
-    const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' })
+    // I wont use the token of 1h, because I prefer let the user to logout
+    //const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' })
 
-    return res.status(200).json({ message: 'Login successful', token })
+    return res.status(200).json({ message: 'Login successful'/*, token*/ })
   } catch (error) {
     console.error('Login error:', error)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
 
-module.exports = {registerUserController, loginUserController}
+const getRoutesFromUser = async (req, res) => {
+
+    const userName = req.params.userName //Lo ideal es obtener el userId desde un middleware que descifre el token en JWT....
+    console.log('userName',userName);
+    
+    const resUserInfo = await getUserInfo(userName)
+  
+    res.status(200).send({user: resUserInfo})
+} 
+
+module.exports = {registerUserController, loginUserController, getRoutesFromUser}
